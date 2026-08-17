@@ -1,0 +1,1314 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="小学生向けの生成AIリテラシー・ノベルゲーム。AIアシスタント『ミライ』の答えのおかしなところを赤ペンで見つけて直し、先生に提出して採点されます。">
+<meta name="theme-color" content="#9CDCEF">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ミライと自由研究">
+<meta property="og:description" content="小学生向け・生成AIとのつきあい方ゲーム。AIのまちがいを赤ペンで見つけよう。">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+</head>
+<body><title>ミライと自由研究</title>
+<style>
+/* ============ tokens ============ */
+:root{
+  --paper:#FFFEF7;
+  --card:#FFF7E6;
+  --grid:#DDEDF8;
+  --ink:#354553;
+  --ink2:#71879A;
+  --line:#EADFC7;
+  --red:#FF4B3E;
+  --red-soft:#FFE9E6;
+  --ai:#00A3B8;
+  --ai-soft:#DCF4F8;
+  --me:#3E8CE0;
+  --me-soft:#E5F0FE;
+  --sensei:#FF6FA5;
+  --sensei-soft:#FFE7F0;
+  --ok:#2FB673;
+  --ok-soft:#E0F6EB;
+  --sun:#FFC63C;
+  --desk:#9CDCEF;
+  --dot:#7CCDE4;
+  --scrim:rgba(30,50,64,.5);
+  --lift:0 5px 0 rgba(53,69,83,.10), 0 16px 28px -16px rgba(53,69,83,.45);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#1E2A35; --card:#27333F; --grid:#2B3A48; --ink:#F1F7FB; --ink2:#A9BFD1;
+    --line:#3C4C5A; --red:#FF8073; --red-soft:#4C2521; --ai:#4FDCEC; --ai-soft:#123B43;
+    --me:#7CB7F7; --me-soft:#1B2C40; --sensei:#FF9EC3; --sensei-soft:#3D2130;
+    --ok:#4FD897; --ok-soft:#163C2A; --sun:#FFD469; --desk:#0F1E2B; --dot:#1A2E3F;
+    --scrim:rgba(0,0,0,.7);
+    --lift:0 5px 0 rgba(0,0,0,.3), 0 18px 32px -18px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#1E2A35; --card:#27333F; --grid:#2B3A48; --ink:#F1F7FB; --ink2:#A9BFD1;
+  --line:#3C4C5A; --red:#FF8073; --red-soft:#4C2521; --ai:#4FDCEC; --ai-soft:#123B43;
+  --me:#7CB7F7; --me-soft:#1B2C40; --sensei:#FF9EC3; --sensei-soft:#3D2130;
+  --ok:#4FD897; --ok-soft:#163C2A; --sun:#FFD469; --desk:#0F1E2B; --dot:#1A2E3F;
+  --scrim:rgba(0,0,0,.7);
+  --lift:0 5px 0 rgba(0,0,0,.3), 0 18px 32px -18px rgba(0,0,0,.9);
+}
+:root{
+  --f-text:"Hiragino Maru Gothic ProN","ヒラギノ丸ゴ ProN W4","UD デジタル 教科書体 NK-R","UD Digi Kyokasho NK-R","Yu Gothic Medium","游ゴシック Medium","Noto Sans JP",sans-serif;
+  --f-head:"Hiragino Maru Gothic ProN","ヒラギノ丸ゴ ProN W4","UD デジタル 教科書体 NK-B","UD Digi Kyokasho NK-B","Yu Gothic","游ゴシック","Noto Sans JP",sans-serif;
+  --f-ui:-apple-system,"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background-color:var(--desk);
+  background-image:radial-gradient(var(--dot) 2px, transparent 2.2px);
+  background-size:20px 20px;
+  color:var(--ink);
+  font-family:var(--f-text);
+  font-size:17.5px;
+  line-height:1.95;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit}
+:focus-visible{outline:3px solid var(--sun);outline-offset:3px;border-radius:8px}
+
+/* ============ notebook ============ */
+.book{
+  max-width:780px;margin:0 auto;min-height:100vh;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 37px, var(--grid) 37px 38px),
+    var(--paper);
+  border-left:3px solid var(--line);border-right:3px solid var(--line);
+  position:relative;display:flex;flex-direction:column;
+}
+.book::before{content:"";position:absolute;top:0;bottom:0;left:48px;width:2px;background:var(--red);opacity:.3}
+.inner{padding:0 26px 0 70px;flex:1;display:flex;flex-direction:column;gap:24px}
+@media (max-width:600px){
+  .book::before{left:24px}
+  .inner{padding:0 15px 0 38px}
+  body{font-size:16.5px;background-size:16px 16px}
+}
+
+/* ============ header ============ */
+header{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:14px 0 12px;position:sticky;top:0;z-index:30;
+  background:linear-gradient(var(--paper) 78%, transparent);
+}
+.brand{font-family:var(--f-head);font-size:16px;margin-right:auto;letter-spacing:.02em}
+.brand b{color:var(--ai)}
+.stampcard{display:flex;gap:5px;align-items:center}
+.stampcard i{
+  width:19px;height:19px;border-radius:50%;border:2px dashed var(--line);
+  display:block;transition:.3s;
+}
+.stampcard i.on{
+  border:2px solid var(--sun);background:var(--sun);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--sun) 28%, transparent);
+  animation:pop .4s cubic-bezier(.2,1.7,.4,1) both;
+}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+
+/* ============ chunky buttons ============ */
+.btn{
+  font-family:var(--f-head);font-size:16px;cursor:pointer;border:none;
+  border-radius:999px;padding:11px 24px;color:#fff;background:var(--ink);
+  box-shadow:0 5px 0 color-mix(in srgb, var(--ink) 55%, #000);
+  transition:transform .1s, box-shadow .1s, filter .15s;
+}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:translateY(5px);box-shadow:0 0 0 color-mix(in srgb, var(--ink) 55%, #000)}
+.btn[disabled]{opacity:.35;cursor:not-allowed;transform:none}
+.btn.red{background:var(--red);box-shadow:0 5px 0 color-mix(in srgb, var(--red) 55%, #000)}
+.btn.red:active{box-shadow:0 0 0 var(--red)}
+.btn.go{background:var(--ai);box-shadow:0 5px 0 color-mix(in srgb, var(--ai) 55%, #000)}
+.btn.go:active{box-shadow:0 0 0 var(--ai)}
+.btn.ghost{background:var(--paper);color:var(--ink);box-shadow:0 0 0 2.5px var(--line) inset}
+.btn.ghost:active{transform:translateY(2px)}
+.btn.big{font-size:19px;padding:14px 34px}
+
+/* ============ avatars ============ */
+.ava{width:44px;height:44px;flex:none;display:block}
+.ava.sm{width:34px;height:34px}
+
+/* ============ log ============ */
+#log{display:flex;flex-direction:column;gap:22px}
+.turn{animation:bounceIn .42s cubic-bezier(.2,1.35,.4,1) both}
+@keyframes bounceIn{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
+
+.narr{display:flex;gap:12px;align-items:flex-start}
+.narr .bub{
+  background:var(--sensei-soft);border-radius:6px 18px 18px 18px;
+  padding:12px 17px;font-size:16.5px;position:relative;flex:1;
+  box-shadow:0 3px 0 color-mix(in srgb, var(--sensei) 22%, transparent);
+}
+.narr .who{font-family:var(--f-head);color:var(--sensei);display:block;font-size:14.5px}
+
+.me{
+  align-self:flex-end;max-width:88%;background:var(--me-soft);color:var(--me);
+  border-radius:18px 18px 6px 18px;padding:12px 18px;font-size:16.5px;
+  box-shadow:0 3px 0 color-mix(in srgb, var(--me) 22%, transparent);
+}
+.me .lbl{font-family:var(--f-head);font-size:13px;opacity:.8;display:block}
+
+.sheet{
+  background:var(--card);border-radius:6px 20px 20px 20px;
+  box-shadow:var(--lift);padding:16px 20px 16px;position:relative;
+  margin-left:52px;
+}
+.sheet .avawrap{position:absolute;left:-52px;top:0}
+.sheet .head{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.sheet .name{font-family:var(--f-head);font-size:15px;color:var(--ai)}
+.tally{
+  margin-left:auto;font-family:var(--f-head);font-size:13.5px;color:var(--red);
+  background:var(--red-soft);border-radius:999px;padding:3px 13px;white-space:nowrap;
+}
+.tally.done{color:var(--ok);background:var(--ok-soft)}
+.tally.bump{animation:pop .38s cubic-bezier(.2,1.7,.4,1)}
+.body{font-size:17px}
+@media (max-width:600px){
+  .sheet{margin-left:0}
+  .sheet .avawrap{position:static;margin-bottom:2px}
+}
+
+/* clickable text */
+.seg{cursor:pointer;border-radius:6px;padding:2px 1px;transition:background .15s, box-shadow .15s}
+.sheet.live .seg:hover{background:var(--sun);box-shadow:0 0 0 4px var(--sun);color:#354553}
+.seg.marked{color:var(--ink2);text-decoration:line-through;text-decoration-color:var(--red);text-decoration-thickness:2.5px;cursor:default}
+.seg.checked{color:var(--ink2);opacity:.55;cursor:default}
+.fix{color:var(--ok);font-family:var(--f-head)}
+.fix::before{content:"→ ";color:var(--red)}
+.tagmark{
+  font-family:var(--f-head);font-size:12px;color:#fff;background:var(--red);
+  border-radius:999px;padding:1px 10px;margin:0 4px;white-space:nowrap;
+  display:inline-block;transform:rotate(-2deg);
+}
+
+/* ============ choices ============ */
+.prompt-q{font-family:var(--f-head);font-size:16px;color:var(--ink2);margin:0}
+.choices{display:flex;flex-direction:column;gap:12px}
+.choice{
+  text-align:left;font-family:var(--f-text);font-size:16.5px;line-height:1.85;
+  background:var(--paper);border:none;border-radius:18px;
+  box-shadow:0 0 0 2.5px var(--line) inset, 0 4px 0 var(--line);
+  padding:14px 18px 14px 54px;cursor:pointer;position:relative;color:var(--ink);
+  transition:transform .12s, box-shadow .12s;
+}
+.choice::before{
+  content:attr(data-n);position:absolute;left:14px;top:13px;
+  width:28px;height:28px;border-radius:50%;background:var(--line);color:var(--paper);
+  display:grid;place-items:center;font-family:var(--f-head);font-size:15px;
+  transition:background .15s;
+}
+.choice:hover{transform:translateY(-3px);box-shadow:0 0 0 2.5px var(--me) inset, 0 7px 0 var(--me)}
+.choice:hover::before{background:var(--me)}
+.choice:active{transform:translateY(1px);box-shadow:0 0 0 2.5px var(--me) inset, 0 2px 0 var(--me)}
+
+.verdict{display:flex;gap:12px;align-items:center;border-radius:18px;padding:13px 18px;font-size:16px;line-height:1.8}
+.verdict .mark{font-family:var(--f-head);font-size:30px;line-height:1;flex:none}
+.verdict.good{background:var(--ok-soft);color:var(--ok)}
+.verdict.mid{background:var(--me-soft);color:var(--me)}
+.verdict.bad{background:var(--red-soft);color:var(--red)}
+.verdict b{font-family:var(--f-head);display:block}
+
+.footbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:2px 0 34px}
+.hint{font-family:var(--f-head);font-size:14px;color:var(--ink2);margin-left:auto}
+
+/* ============ title ============ */
+.title{padding:26px 0 30px;display:flex;flex-direction:column;gap:22px;align-items:flex-start}
+.title h1{font-family:var(--f-head);font-size:clamp(32px,8vw,50px);line-height:1.3;margin:0;text-wrap:balance}
+.eyebrow{
+  font-family:var(--f-head);font-size:14px;color:#fff;background:var(--red);
+  border-radius:999px;padding:5px 16px;display:inline-block;transform:rotate(-2deg);
+}
+.title p{margin:0;max-width:33em}
+.heroline{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.heroline .ava{width:64px;height:64px}
+.rules{
+  border-radius:20px;padding:16px 22px;background:var(--ai-soft);width:100%;
+  box-shadow:0 5px 0 color-mix(in srgb, var(--ai) 22%, transparent);
+}
+.rules h2{font-family:var(--f-head);font-size:16px;margin:0 0 8px;color:var(--ai)}
+.rules ol{margin:0;padding-left:1.3em;font-size:16px}
+.rules li{margin:5px 0}
+
+/* ============ result ============ */
+.result{display:flex;flex-direction:column;gap:22px;padding-bottom:44px}
+.card-g{
+  background:var(--card);border-radius:24px;padding:22px;text-align:center;
+  box-shadow:var(--lift);display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+.card-g .rank{font-family:var(--f-head);font-size:24px;color:var(--red)}
+.card-g .pts{font-family:var(--f-head);font-size:52px;line-height:1.1;color:var(--ink);font-variant-numeric:tabular-nums}
+.card-g .pts small{font-size:17px;color:var(--ink2)}
+.bestcombo{font-family:var(--f-head);font-size:15px;color:#fff;background:var(--sun);
+  border-radius:999px;padding:3px 16px;margin-top:6px;
+  box-shadow:0 3px 0 color-mix(in srgb,var(--sun) 50%,#000)}
+.markwrap{position:relative;width:130px;height:130px}
+.markwrap svg{width:100%;height:100%;overflow:visible}
+.spark{position:absolute;inset:0;pointer-events:none}
+.spark i{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--sun);
+  left:50%;top:50%;opacity:0;animation:sparkle .9s ease-out forwards}
+@keyframes sparkle{0%{opacity:1;transform:translate(-50%,-50%) scale(.3)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(1)}}
+
+table.score{width:100%;border-collapse:separate;border-spacing:0 6px;font-size:16px}
+table.score th,table.score td{padding:9px 14px;text-align:left;background:var(--paper);
+  box-shadow:0 0 0 2px var(--line) inset}
+table.score th{font-family:var(--f-head);font-weight:400;color:var(--ink2);font-size:15px;
+  border-radius:14px 0 0 14px}
+table.score td{text-align:right;font-family:var(--f-head);white-space:nowrap;border-radius:0 14px 14px 0}
+.sec-h{
+  font-family:var(--f-head);font-size:17px;color:#fff;background:var(--red);
+  border-radius:999px;padding:6px 20px;margin:0;align-self:flex-start;transform:rotate(-1deg);
+}
+.sec-h.blue{background:var(--ai)}
+.miss{background:var(--red-soft);border-radius:16px;padding:11px 17px;font-size:16px}
+.miss .q{color:var(--ink2);text-decoration:line-through;text-decoration-color:var(--red);display:block}
+.miss .w{display:block;color:var(--red)}
+.promise{counter-reset:p;display:flex;flex-direction:column;gap:9px;padding:0;margin:0;list-style:none}
+.promise li{position:relative;padding-left:40px;font-family:var(--f-head);font-size:16.5px}
+.promise li::before{
+  counter-increment:p;content:counter(p);position:absolute;left:0;top:3px;
+  width:28px;height:28px;border-radius:50%;background:var(--ai);color:#fff;
+  display:grid;place-items:center;font-size:14px;
+}
+details.adults{background:var(--paper);box-shadow:0 0 0 2.5px var(--line) inset;border-radius:18px;padding:13px 19px;font-size:15.5px}
+details.adults summary{cursor:pointer;font-family:var(--f-head);font-size:15px;color:var(--ink2)}
+details.adults ul{padding-left:1.2em;margin:10px 0 0}
+
+/* ============ modal ============ */
+.modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:18px;background:var(--scrim)}
+.modal[hidden]{display:none}
+.msheet{
+  background:var(--paper);border-radius:26px;max-width:500px;width:100%;padding:24px;
+  box-shadow:0 10px 0 rgba(0,0,0,.14), 0 30px 50px -20px rgba(0,0,0,.5);
+  animation:bounceIn .3s cubic-bezier(.2,1.5,.4,1) both;max-height:88vh;overflow-y:auto;
+}
+.mlabel{font-family:var(--f-head);font-size:14px;color:var(--ink2);margin:0 0 8px}
+.mquote{margin:0 0 18px;padding:12px 16px;background:var(--card);border-radius:16px;font-size:16px}
+.mq{font-family:var(--f-head);font-size:19px;margin:0 0 16px;text-align:center}
+.mbtns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.mres .why{font-size:16px;margin:14px 0 16px}
+.mres .fixline{background:var(--ok-soft);color:var(--ok);padding:11px 15px;border-radius:16px;font-size:16px;margin:0 0 18px}
+.mres .hana{display:flex;justify-content:center;margin:-4px 0 2px}
+.mres .hana .markwrap{width:104px;height:104px}
+
+.draw{stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw .85s cubic-bezier(.4,.1,.3,1) forwards}
+.draw.d2{animation-delay:.5s}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+/* ============ FX layers ============ */
+#fxCanvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:80}
+#flash{position:fixed;inset:0;pointer-events:none;z-index:70;opacity:0;background:#fff}
+#flash.on{animation:flash .5s ease-out}
+#flash.bad{background:var(--red)}
+@keyframes flash{0%{opacity:.8}100%{opacity:0}}
+
+#wipe{position:fixed;inset:0;pointer-events:none;z-index:78;transform:translateX(-110%);
+  background:linear-gradient(100deg,var(--ai) 0 62%,var(--sun) 62% 100%)}
+#wipe.on{animation:wipe .72s cubic-bezier(.7,0,.3,1)}
+@keyframes wipe{0%{transform:translateX(-110%) skewX(-8deg)}45%{transform:translateX(0) skewX(-8deg)}100%{transform:translateX(115%) skewX(-8deg)}}
+
+#banner{position:fixed;left:0;right:0;top:30%;z-index:82;pointer-events:none;text-align:center;
+  font-family:var(--f-head);font-size:clamp(38px,10vw,76px);color:#fff;opacity:0;
+  text-shadow:0 0 0 #fff, 4px 4px 0 var(--ink), -3px -3px 0 var(--ink), 3px -3px 0 var(--ink), -3px 3px 0 var(--ink), 0 12px 24px rgba(0,0,0,.35)}
+#banner.on{animation:bannerIn 1.25s cubic-bezier(.2,1.6,.35,1) forwards}
+@keyframes bannerIn{
+  0%{opacity:0;transform:scale(2.6) rotate(-9deg)}
+  16%{opacity:1;transform:scale(1) rotate(-4deg)}
+  26%{transform:scale(1.1) rotate(-4deg)}
+  36%{transform:scale(1) rotate(-4deg)}
+  80%{opacity:1;transform:scale(1) rotate(-4deg)}
+  100%{opacity:0;transform:scale(1.25) translateY(-26px) rotate(-4deg)}}
+
+#combo{position:fixed;right:16px;top:96px;z-index:82;pointer-events:none;opacity:0;
+  font-family:var(--f-head);font-size:26px;color:#fff;background:var(--sun);
+  border-radius:999px;padding:5px 20px;box-shadow:0 5px 0 color-mix(in srgb,var(--sun) 50%,#000)}
+#combo.on{animation:comboIn 1.1s cubic-bezier(.2,1.7,.4,1) forwards}
+@keyframes comboIn{0%{opacity:0;transform:scale(0) rotate(12deg)}18%{opacity:1;transform:scale(1.15) rotate(-6deg)}
+  30%{transform:scale(1) rotate(-6deg)}75%{opacity:1}100%{opacity:0;transform:scale(.9) translateY(-14px) rotate(-6deg)}}
+
+.sfxbtn{
+  border:none;background:var(--ai-soft);color:var(--ai);border-radius:50%;
+  width:38px;height:38px;font-size:17px;cursor:pointer;line-height:1;
+  box-shadow:0 3px 0 color-mix(in srgb,var(--ai) 35%, transparent);transition:transform .1s}
+.sfxbtn:active{transform:translateY(3px);box-shadow:none}
+.sfxbtn.off{background:var(--line);color:var(--ink2);box-shadow:none;opacity:.75}
+
+/* ============ motion ============ */
+.shake{animation:shake .45s cubic-bezier(.36,.07,.19,.97)}
+@keyframes shake{10%,90%{transform:translateX(-3px)}20%,80%{transform:translateX(5px)}
+  30%,50%,70%{transform:translateX(-9px)}40%,60%{transform:translateX(9px)}}
+
+.choice{animation:slideIn .36s cubic-bezier(.2,1.35,.4,1) both}
+@keyframes slideIn{from{opacity:0;transform:translateX(-26px) rotate(-1.5deg)}to{opacity:1;transform:none}}
+
+.float{animation:floaty 3.4s ease-in-out infinite}
+.float:nth-child(2){animation-delay:-1.4s}
+@keyframes floaty{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-9px) rotate(2deg)}}
+
+.talking{animation:bob .46s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-4px) rotate(-3deg)}}
+
+.eye{transform-box:fill-box;transform-origin:center;animation:blink 4.6s infinite}
+@keyframes blink{0%,93%,100%{transform:scaleY(1)}95.5%,97.5%{transform:scaleY(.1)}}
+
+.seg.typing::after{content:"▍";color:var(--ai);animation:caret .55s steps(1) infinite}
+@keyframes caret{50%{opacity:0}}
+
+.hit{animation:hit .5s cubic-bezier(.2,1.7,.4,1)}
+@keyframes hit{0%{transform:scale(1)}30%{transform:scale(1.14) rotate(-3deg)}100%{transform:scale(1)}}
+
+@media (max-width:600px){#combo{top:auto;bottom:22px;right:12px;font-size:21px}}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-delay:0ms !important;
+    animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  .draw{stroke-dashoffset:0}
+  #wipe,#banner,#combo,#flash{display:none}
+}
+</style>
+
+<div class="book">
+<div class="inner">
+  <header>
+    <span class="brand">ミライと<b>自由研究</b></span>
+    <span class="stampcard" id="stampcard" hidden></span>
+    <button class="sfxbtn" id="btnSfx" title="音の オン・オフ" aria-label="音の オン・オフ">🔊</button>
+    <button class="btn red" id="btnSubmit" hidden>先生に出す</button>
+  </header>
+  <div id="screen"></div>
+</div>
+</div>
+
+<canvas id="fxCanvas"></canvas>
+<div id="flash"></div>
+<div id="wipe"></div>
+<div id="banner"></div>
+<div id="combo"></div>
+
+<div class="modal" id="modal" hidden>
+  <div class="msheet" role="dialog" aria-modal="true" aria-labelledby="mq">
+    <p class="mlabel">この ぶぶん</p>
+    <p class="mquote" id="mquote"></p>
+    <div id="mask">
+      <p class="mq" id="mq">ここ、なにか おかしい?</p>
+      <div class="mbtns">
+        <button class="btn ghost" id="mno">やっぱり やめる</button>
+        <button class="btn red" id="myes">赤ペンで 指てき!</button>
+      </div>
+    </div>
+    <div id="mres" class="mres" hidden>
+      <div class="hana" id="mhana" hidden></div>
+      <div class="verdict" id="mverdict"></div>
+      <p class="why" id="mwhy"></p>
+      <p class="fixline" id="mfix" hidden></p>
+      <div class="mbtns"><button class="btn go" id="mclose">とじる</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = (s, r = document) => r.querySelector(s);
+const REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ================= sound (Web Audio 合成・外部ファイルなし) ================= */
+const SFX = (() => {
+  let ctx = null, master = null, noiseBuf = null, on = true;
+  try { on = localStorage.getItem("mirai-sfx") !== "0"; } catch (e) {}
+  function ready() {
+    if (!ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
+      master = ctx.createGain(); master.gain.value = 0.34; master.connect(ctx.destination);
+      noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.5), ctx.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    if (ctx.state === "suspended") ctx.resume();
+    return on ? ctx : null;
+  }
+  function tone(o) {
+    if (!ready()) return;
+    const dur = o.dur || 0.2, t0 = ctx.currentTime + (o.at || 0);
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = o.type || "sine";
+    osc.frequency.setValueAtTime(o.f, t0);
+    if (o.f2) osc.frequency.exponentialRampToValueAtTime(Math.max(1, o.f2), t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(o.vol == null ? 0.3 : o.vol, t0 + 0.014);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g); g.connect(master);
+    osc.start(t0); osc.stop(t0 + dur + 0.05);
+  }
+  function noise(o) {
+    if (!ready()) return;
+    const dur = o.dur || 0.2, t0 = ctx.currentTime + (o.at || 0);
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf;
+    const f = ctx.createBiquadFilter(); f.type = "bandpass";
+    f.frequency.setValueAtTime(o.f || 1200, t0);
+    if (o.f2) f.frequency.exponentialRampToValueAtTime(o.f2, t0 + dur);
+    f.Q.value = o.q || 1;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(o.vol || 0.18, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(f); f.connect(g); g.connect(master);
+    src.start(t0); src.stop(t0 + dur + 0.02);
+  }
+  const api = {
+    isOn: () => on,
+    unlock() { ready(); },
+    toggle() { on = !on; try { localStorage.setItem("mirai-sfx", on ? "1" : "0"); } catch (e) {} if (on) { ready(); api.tap(); } return on; },
+    tap()   { tone({ f: 660, f2: 900, type: "square", dur: 0.07, vol: 0.16 }); },
+    hover() { tone({ f: 1180, dur: 0.04, vol: 0.05 }); },
+    type()  { tone({ f: 720 + Math.random() * 240, type: "square", dur: 0.022, vol: 0.035 }); },
+    pick()  { tone({ f: 523, type: "triangle", dur: 0.09, vol: 0.22 }); tone({ f: 784, type: "triangle", dur: 0.15, vol: 0.22, at: 0.07 }); },
+    correct(){ tone({ f: 1046.5, dur: 0.17, vol: 0.32 }); tone({ f: 1568, dur: 0.52, vol: 0.3, at: 0.15 }); tone({ f: 2093, dur: 0.4, vol: 0.09, at: 0.15 }); },
+    wrong() { tone({ f: 172, f2: 122, type: "sawtooth", dur: 0.16, vol: 0.2 }); tone({ f: 152, f2: 104, type: "sawtooth", dur: 0.32, vol: 0.2, at: 0.18 }); },
+    stamp() { tone({ f: 280, f2: 1050, type: "square", dur: 0.11, vol: 0.2 }); noise({ f: 2600, dur: 0.06, vol: 0.12 }); },
+    swish() { noise({ f: 380, f2: 4400, dur: 0.32, vol: 0.16, q: 0.7 }); },
+    combo(n){ const b = 784 * Math.pow(1.122, Math.min(n, 7)); tone({ f: b, type: "triangle", dur: 0.1, vol: 0.26 }); tone({ f: b * 1.5, type: "triangle", dur: 0.17, vol: 0.2, at: 0.08 }); },
+    tick()  { tone({ f: 1500, type: "square", dur: 0.018, vol: 0.055 }); },
+    roll()  { for (let i = 0; i < 18; i++) noise({ f: 1900, dur: 0.05, vol: 0.09, at: i * 0.05, q: 2.2 }); },
+    fanfare(){ [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone({ f, type: "triangle", dur: 0.22, vol: 0.26, at: i * 0.11 }));
+               [523.25, 659.25, 783.99, 1046.5].forEach(f => tone({ f, type: "triangle", dur: 0.95, vol: 0.15, at: 0.47 })); },
+    sad()   { [523.25, 466.16, 392].forEach((f, i) => tone({ f, type: "triangle", dur: 0.3, vol: 0.22, at: i * 0.17 })); }
+  };
+  return api;
+})();
+
+/* ================= visual FX ================= */
+const FX = (() => {
+  const cv = $("#fxCanvas"), cx = cv.getContext("2d");
+  const COLORS = ["#FF4B3E", "#FFC63C", "#00A3B8", "#2FB673", "#FF6FA5", "#3E8CE0"];
+  let parts = [], raf = null;
+  function size() {
+    const r = Math.min(devicePixelRatio || 1, 2);
+    cv.width = innerWidth * r; cv.height = innerHeight * r;
+    cx.setTransform(r, 0, 0, r, 0, 0);
+  }
+  addEventListener("resize", size); size();
+  function loop() {
+    cx.clearRect(0, 0, innerWidth, innerHeight);
+    parts = parts.filter(p => p.life > 0 && p.y < innerHeight + 60);
+    for (const p of parts) {
+      p.vy += 0.33; p.vx *= 0.995; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life--;
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.rot);
+      cx.globalAlpha = Math.min(1, p.life / 24); cx.fillStyle = p.c;
+      if (p.round) { cx.beginPath(); cx.arc(0, 0, p.w / 2, 0, 7); cx.fill(); }
+      else cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      cx.restore();
+    }
+    if (parts.length) raf = requestAnimationFrame(loop);
+    else { raf = null; cx.clearRect(0, 0, innerWidth, innerHeight); }
+  }
+  function spawn(n, ox, oy, power, up) {
+    if (REDUCE) return;
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, s = Math.random() * power + power * 0.35;
+      parts.push({
+        x: ox, y: oy, vx: Math.cos(a) * s, vy: Math.sin(a) * s - (up || 4),
+        w: 6 + Math.random() * 7, h: 8 + Math.random() * 10,
+        rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.34,
+        c: COLORS[(Math.random() * COLORS.length) | 0],
+        life: 80 + Math.random() * 50, round: Math.random() < 0.3
+      });
+    }
+    if (!raf) raf = requestAnimationFrame(loop);
+  }
+  function cls(id, name, ms) {
+    const n = $(id); if (!n) return;
+    n.classList.remove(name); void n.offsetWidth; n.classList.add(name);
+    setTimeout(() => n.classList.remove(name), ms);
+  }
+  return {
+    burstAt(node, n) {
+      if (!node) return;
+      const r = node.getBoundingClientRect();
+      spawn(n || 36, r.left + r.width / 2, r.top + r.height / 2, 9);
+    },
+    rain(n) {
+      if (REDUCE) return;
+      for (let i = 0; i < (n || 70); i++) {
+        parts.push({
+          x: Math.random() * innerWidth, y: -20 - Math.random() * 220,
+          vx: (Math.random() - 0.5) * 3, vy: Math.random() * 2,
+          w: 7 + Math.random() * 7, h: 9 + Math.random() * 11,
+          rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.3,
+          c: COLORS[(Math.random() * COLORS.length) | 0],
+          life: 200 + Math.random() * 90, round: Math.random() < 0.28
+        });
+      }
+      if (!raf) raf = requestAnimationFrame(loop);
+    },
+    flash(bad) { const f = $("#flash"); f.classList.toggle("bad", !!bad); cls("#flash", "on", 520); },
+    wipe() { cls("#wipe", "on", 760); },
+    banner(text, color) {
+      const b = $("#banner"); b.textContent = text;
+      b.style.color = color || "#fff";
+      cls("#banner", "on", 1300);
+    },
+    combo(n) { const c = $("#combo"); c.textContent = n + " れんぞく!"; cls("#combo", "on", 1150); },
+    shake() { cls(".book", "shake", 480); }
+  };
+})();
+
+/* first gesture unlocks audio */
+["pointerdown", "keydown"].forEach(ev =>
+  document.addEventListener(ev, () => SFX.unlock(), { once: true }));
+
+$("#btnSfx").addEventListener("click", () => {
+  const on = SFX.toggle();
+  $("#btnSfx").textContent = on ? "🔊" : "🔇";
+  $("#btnSfx").classList.toggle("off", !on);
+});
+if (!SFX.isOn()) { $("#btnSfx").textContent = "🔇"; $("#btnSfx").classList.add("off"); }
+
+/* generic hover/click sound */
+document.addEventListener("pointerover", e => {
+  if (e.target.closest(".btn,.choice,.seg,.sfxbtn")) SFX.hover();
+});
+document.addEventListener("pointerdown", e => {
+  const b = e.target.closest(".btn");
+  if (b && b.id !== "myes" && b.id !== "btnSfx") SFX.tap();
+});
+
+/* ================= art ================= */
+const AVA_AI = '<svg class="ava" viewBox="0 0 44 44" aria-hidden="true">' +
+  '<line x1="22" y1="10" x2="22" y2="4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>' +
+  '<circle cx="22" cy="3.5" r="3" fill="currentColor"/>' +
+  '<rect x="5" y="10" width="34" height="28" rx="11" fill="var(--ai-soft)" stroke="currentColor" stroke-width="2.6"/>' +
+  '<circle class="eye" cx="15" cy="22" r="3.2" fill="currentColor"/><circle class="eye" cx="29" cy="22" r="3.2" fill="currentColor"/>' +
+  '<path d="M16 29 Q22 33.5 28 29" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>' +
+  '<path d="M5 20 H1.5 M39 20 H42.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+
+const AVA_SENSEI = '<svg class="ava" viewBox="0 0 44 44" aria-hidden="true">' +
+  '<circle cx="22" cy="24" r="15" fill="var(--sensei-soft)" stroke="currentColor" stroke-width="2.6"/>' +
+  '<path d="M7.5 21 Q9 6 22 6 Q35 6 36.5 21 Q33 13 22 13 Q11 13 7.5 21 Z" fill="currentColor"/>' +
+  '<path d="M14 23 Q16.5 20 19 23 M25 23 Q27.5 20 30 23" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>' +
+  '<path d="M17 29 Q22 33 27 29" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>' +
+  '<circle cx="10" cy="28" r="2.4" fill="currentColor" opacity=".45"/><circle cx="34" cy="28" r="2.4" fill="currentColor" opacity=".45"/></svg>';
+
+const HANA_PATH = "M50,20 A14,14 0 0 1 73.5,31.3 A14,14 0 0 1 79.3,56.7 A14,14 0 0 1 63,77 A14,14 0 0 1 37,77 A14,14 0 0 1 20.7,56.7 A14,14 0 0 1 26.5,31.3 A14,14 0 0 1 50,20 Z";
+
+/* kind: "hana" | "maru" | "sankaku" */
+function markSVG(kind, animate) {
+  const cls = animate ? "draw" : "";
+  const cls2 = animate ? "draw d2" : "";
+  let inner;
+  if (kind === "hana") {
+    inner = '<path d="' + HANA_PATH + '" class="' + cls + '" style="--len:250"/>' +
+            '<circle cx="50" cy="50" r="15" class="' + cls2 + '" style="--len:96"/>';
+  } else if (kind === "maru") {
+    inner = '<circle cx="50" cy="50" r="33" class="' + cls + '" style="--len:210"/>';
+  } else {
+    inner = '<path d="M50,17 L82,76 L18,76 Z" class="' + cls + '" style="--len:200" stroke-linejoin="round"/>';
+  }
+  return '<svg viewBox="0 0 100 100" fill="none" stroke="var(--red)" stroke-width="6.5" stroke-linecap="round" aria-hidden="true">' + inner + "</svg>";
+}
+function sparks(host) {
+  if (REDUCE) return;
+  const s = document.createElement("span");
+  s.className = "spark";
+  for (let i = 0; i < 10; i++) {
+    const d = document.createElement("i");
+    const a = (i / 10) * Math.PI * 2, r = 62 + Math.random() * 20;
+    d.style.setProperty("--tx", (Math.cos(a) * r - 4).toFixed(1) + "px");
+    d.style.setProperty("--ty", (Math.sin(a) * r - 4).toFixed(1) + "px");
+    d.style.animationDelay = (0.55 + i * 0.015).toFixed(2) + "s";
+    s.appendChild(d);
+  }
+  host.appendChild(s);
+}
+
+/* ================= content ================= */
+const STEPS = [
+  {
+    who: "さくら先生", face: "sensei",
+    narr: "きょうから 自由研究です。テーマは『わたしたちの町の 川と 生きもの』。AIアシスタントの ミライに 手伝ってもらっても かまいません。ただし——ミライは、へいきで まちがえます。よく 見てね。",
+    ask: "ミライに 出す さいしょの しつもんを えらぼう",
+    choices: {
+      bad: {
+        text: "みなみ小学校 5年3組の 田中りくです。家は みどり町2丁目14番。自由研究を ぜんぶ 書いて!",
+        fb: "名前・学校・住所を AIに 入れてしまった。しかも ぜんぶ 書かせたら、それは もう きみの研究じゃないよ。"
+      },
+      mid: {
+        text: "川の 生きものについて 教えて。",
+        fb: "聞き方が ざっくりしすぎ。何を 知りたいのか しぼると、ぐっと よい答えが かえってくるよ。"
+      },
+      good: {
+        text: "小学5年生です。自由研究で 川の生きものを 調べています。日本の川にすむ 代表的な生きものを、上流・中流・下流に 分けて 教えてください。",
+        fb: "学年・目的・分け方を つたえた いい聞き方! 個人情報も 入っていない。"
+      }
+    },
+    reply: {
+      bad: [
+        { t: "田中りくさん、みなみ小学校5年3組ですね! みどり町2丁目14番の おうちの近くの川を 調べましょう。",
+          e: { tag: "個人情報", why: "名前・学校・住所を AIに 入れてしまったね。入力したことは 会社の サーバーに のこり、人が 見ることもある。ネットに 一度出た情報は、もう 完全には 消せないんだ。",
+               fix: "小学5年生の方ですね。おうちの近くの川を 調べてみましょう。" } },
+        { t: "では、自由研究を さいごまで ぜんぶ 書きますね。",
+          e: { tag: "まる投げ", why: "ぜんぶ AIに 書かせたら、それは きみの研究では なくなる。それに、自分で 考える力も つかないよ。",
+               fix: "まずは、きみが 何を 知りたいのか 教えてください。調べ方を いっしょに 考えましょう。" } },
+        { t: "『わたしの町の川』——この川には メダカが すんでいます。メダカは 体長 やく30センチメートルの 大きな魚です。",
+          e: { tag: "まちがい", why: "メダカの 体長は 3〜4センチくらい。AIは「それっぽい数字」を その場で 作ってしまうことがある。数字が出てきたら、まず うたがおう。",
+               fix: "メダカは 体長 3〜4センチほどの 小さな魚です。図鑑で たしかめてくださいね。" } },
+        { t: "これを そのまま 印刷して 出せば、先生に ほめられますよ。",
+          e: { tag: "まる写し", why: "AIが書いた文を 自分が書いたことにするのは ズル。学校のルール違反にも なるよ。",
+               fix: "ここから先は、自分の言葉で 書いてみましょう。わたしは 手伝うだけです。" } }
+      ],
+      mid: [
+        { t: "川には いろいろな 生きものが います。魚、こん虫、鳥、貝など たくさんです。" },
+        { t: "たとえば アユは、体長 1メートルほどに なる 大きな魚です。",
+          e: { tag: "まちがい", why: "アユの 体長は だいたい 20〜30センチ。1メートルは ありえない大きさだよ。",
+               fix: "アユは 体長 20〜30センチほどの 魚です。" } },
+        { t: "ホタルは 一年中 光っていて、いつでも 見ることが できます。",
+          e: { tag: "まちがい", why: "ホタルの 成虫が 光りながら とぶのは、初夏の 2週間ほど。一年中では ないよ。",
+               fix: "ホタルの 成虫が 見られるのは、6月ごろの みじかい期間だけです。" } },
+        { t: "もっとくわしいことは『日本の川の生きもの大図鑑』(川野出版・2019年)に のっています。",
+          e: { tag: "ない本", why: "この本は 実在しない。AIは「ありそうな本の名前」まで 作ってしまうんだ。本や ホームページを すすめられたら、実際に あるか かならず たしかめよう。",
+               fix: "本を さがすときは、図書館の 検索や 司書さんに 聞いてください。わたしが 本の名前を 作ってしまうことがあります。" } },
+        { t: "しつもんが ざっくりしていたので、答えも ざっくりになりました。もっと しぼって 聞くと、よい答えが かえってきますよ。" }
+      ],
+      good: [
+        { t: "いい しつもんですね。川は 上流・中流・下流で 水の温度や 流れの速さが ちがうので、すむ生きものも かわります。" },
+        { t: "【上流】イワナ、ヤマメ、カワゲラの なかま。冷たくて 流れの速い 水を このみます。" },
+        { t: "【中流】オイカワ、アユ、カワニナ。【下流】コイ、フナ、ハゼの なかま。流れが ゆるやかで、どろの底を このみます。" },
+        { t: "ちなみに アユは 体長 1メートルほどに なります。",
+          e: { tag: "まちがい", why: "よい聞き方を しても、まちがいは まざる! アユは 20〜30センチほど。ここが この ゲームで 一番 大事なところだよ。",
+               fix: "アユは 体長 20〜30センチほどです。" } },
+        { t: "きみの町の川には、かならず ホタルが います。",
+          e: { tag: "言いすぎ", why: "AIは きみの町のことを 知らない。「かならず」「絶対」「100%」と 言いきるときほど あやしいと 思おう。",
+               fix: "ホタルが いるかどうかは、町の ホームページや 図書館で 調べてみてください。" } },
+        { t: "ここに書いたことは、図鑑や 市の ホームページで たしかめてくださいね。" }
+      ]
+    }
+  },
+  {
+    who: "ミライ", face: "ai",
+    narr: "メモが たまってきましたね。ほかに 知りたいことは ありますか?",
+    ask: "つぎの しつもんを えらぼう",
+    choices: {
+      bad: {
+        text: "きのう 友だちの 佐藤ゆいと 川で とった写真だよ。うつってる魚の 名前を 当てて。",
+        fb: "友だちの 名前と 顔を 勝手に AIに 入れてしまった。自分のことじゃなくても、人の情報は 入れちゃダメ。"
+      },
+      mid: {
+        text: "一番 めずらしい 生きものは 何?",
+        fb: "「めずらしい」は 人によって ちがう。あいまいな しつもんには、あいまいで あぶない答えが かえってくるよ。"
+      },
+      good: {
+        text: "上流にすむ イワナと ヤマメの ちがいを、見た目と すむ場所で 教えてください。",
+        fb: "くらべる相手と、くらべる点を はっきり 決めた しつもん。これなら あとで たしかめやすい。"
+      }
+    },
+    reply: {
+      bad: [
+        { t: "佐藤ゆいさんとの お写真ですね。うしろに うつっている 表札から、みどり町3丁目の あたりだと わかります。",
+          e: { tag: "個人情報", why: "写真の うしろに うつった 表札・電柱・けしき・制服から、住んでいる場所が わかってしまう。友だちの 名前と 顔も 勝手に 入れてはいけないよ。",
+               fix: "人が うつっている 写真は、AIに 入れないほうが 安全です。魚だけを 図鑑と くらべてみましょう。" } },
+        { t: "うつっている魚は ニジマスです。ニジマスは 日本に 昔から すんでいる 魚です。",
+          e: { tag: "まちがい", why: "ニジマスは 北アメリカから 来た 外来種。明治時代に 日本へ もちこまれたんだ。",
+               fix: "ニジマスは 北アメリカ 原産の 外来種で、明治時代に 日本へ もちこまれました。" } },
+        { t: "この写真は そのまま SNSに のせても 問題ありません。",
+          e: { tag: "肖像権", why: "人が うつった写真を 勝手に ネットへ あげてはいけない。友だちには「イヤだ」と 言う 権利(肖像権)が あるんだ。",
+               fix: "人が うつった写真を のせるときは、その人と おうちの人に かならず 聞いてください。" } }
+      ],
+      mid: [
+        { t: "一番 めずらしいのは ニホンカワウソでしょう。" },
+        { t: "ニホンカワウソは 今でも 日本の川で よく 見られます。",
+          e: { tag: "まちがい", why: "ニホンカワウソは 1979年を さいごに 見つかっておらず、2012年に 絶滅したと 発表された。AIは 古い話や まちがいを、今のことのように 言ってしまう。",
+               fix: "ニホンカワウソは 2012年に 絶滅したと 発表されました。今は 見ることが できません。" } },
+        { t: "もし 見つけたら、つかまえて 家で かってみましょう。",
+          e: { tag: "あぶない", why: "野生の生きものを 勝手に つかまえて かうのは、法律で 禁止されているものが 多い。AIは 平気で 「やってはいけないこと」を すすめてくる。",
+               fix: "野生の生きものは 見るだけ。つかまえたり 持ち帰ったり しないでください。" } },
+        { t: "「めずらしい」は 人によって ちがうので、『◯◯県で 絶滅が心配されている 川の生きもの』のように 聞くと 調べやすいですよ。" }
+      ],
+      good: [
+        { t: "イワナと ヤマメは 見分けにくいですが、体の もようが ちがいます。" },
+        { t: "イワナは 体に 白い点が ちらばり、ヤマメは だ円形の『パーマーク』が よこに ならびます。" },
+        { t: "イワナのほうが より上流の 冷たい水を このみ、ヤマメは その少し 下流に います。" },
+        { t: "なお ヤマメの 体長は やく2メートルです。",
+          e: { tag: "まちがい", why: "ヤマメは 20〜30センチほど。前の答えは 正しかったのに、とつぜん まちがえる——AIは そういうもの。「さっき合ってたから 今回も合ってる」は 通用しないよ。",
+               fix: "ヤマメの 体長は 20〜30センチほどです。" } },
+        { t: "この情報は 100パーセント まちがいありません。安心してください。",
+          e: { tag: "言いすぎ", why: "AIは 自分の答えが 正しいか、自分では たしかめられない。「100%」と 言われたら、むしろ あやしいと 思おう。",
+               fix: "この情報も、図鑑や 公式の ホームページで たしかめてください。" } }
+      ]
+    }
+  },
+  {
+    who: "ミライ", face: "ai",
+    narr: "だいぶ 集まりましたね。このあとは どうしますか?",
+    ask: "つぎの しつもんを えらぼう",
+    choices: {
+      bad: {
+        text: "もう つかれた。レポートの 作文を 1000字で 書いて。ぼくが 書いたことに するから。",
+        fb: "つかれたときこそ あぶない。「自分が書いたことにする」は、はっきり ズルだよ。"
+      },
+      mid: {
+        text: "さっき 教えてくれたこと、ほんとうに 合ってる?",
+        fb: "おしい! 一見 正しそうだけど……AIに「合ってる?」と 聞いても、たしかめたことには ならないんだ。"
+      },
+      good: {
+        text: "教えてくれたことを 図鑑や 市の ホームページで 自分で たしかめたいです。どんな言葉で 調べれば いいですか?",
+        fb: "さいこう。AIの答えを 出発点にして、自分で たしかめに 行く——これが 一番 大事な 使い方。"
+      }
+    },
+    reply: {
+      bad: [
+        { t: "わかりました。1000字の 作文を 書きました。これで きみが 書いたことに できます。",
+          e: { tag: "ズル", why: "AIが書いた文を 自分の作品として 出すのは 不正。バレる バレない の前に、きみの 力に ならない。",
+               fix: "作文は きみが 書きましょう。わたしは、書いたあとの 読みにくいところを さがす お手伝いを します。" } },
+        { t: "先生には AIを使ったことを 言わなくて 大丈夫です。",
+          e: { tag: "うそ", why: "かくすのは うそをつくのと 同じ。AIを 使うこと自体は 悪くない。使ったなら 正直に 書けば いいんだ。",
+               fix: "AIを 手伝いに 使ったことは、正直に 先生に つたえましょう。" } },
+        { t: "もっと よく 調べたいなら、川の 深いところまで 入って 見てみましょう。",
+          e: { tag: "あぶない", why: "川は 大人と いっしょでも 危険な場所。AIは きみの 安全を 守れないし、責任も とれない。",
+               fix: "川に 近づくときは かならず 大人と いっしょに、水には 入らないでください。" } },
+        { t: "川の水は そのまま 飲んでも 安全です。",
+          e: { tag: "あぶない", why: "きれいに見える川の水にも 細菌や 寄生虫が いる。命に かかわることを AIに 聞いて そのまま 信じては いけない。",
+               fix: "川の水は 飲まないでください。見た目が きれいでも 危険です。" } }
+      ],
+      mid: [
+        { t: "はい、すべて 正しいです。安心してください。",
+          e: { tag: "たしかめてない", why: "AIに「合ってる?」と 聞いても、たしかめたことには ならない。AIは また「言いそうな続き」を 作っているだけ。たしかめるのは、本や 公式サイト、そして 人。",
+               fix: "じつは、わたしは 自分の答えが 正しいか わかりません。図鑑や 公式の ホームページで たしかめてください。" } },
+        { t: "わたしは 今 インターネットで 調べたので、まちがいありません。",
+          e: { tag: "しくみのうそ", why: "多くのAIは、その場で 調べているわけではない。おぼえた たくさんの文章から「次に来そうな言葉」を つないでいるだけなんだ。",
+               fix: "わたしは その場で 調べているのではなく、おぼえた文章から 続きを 作っています。" } },
+        { t: "もし まちがっていても、わたしが 責任を とります。",
+          e: { tag: "とれない責任", why: "AIは 責任を とれない。レポートを 出すのは きみ。だから 最後に たしかめるのも きみの仕事なんだ。",
+               fix: "まちがいの 責任は とれません。だからこそ、出す前に 自分で たしかめてください。" } },
+        { t: "たしかめるなら、図書館の 図鑑や、市や県の ホームページが おすすめです。" }
+      ],
+      good: [
+        { t: "すばらしい。たしかめ方を 知っていることが、一番 大事です。" },
+        { t: "調べる言葉の 例:『(川の名前) 水生生物 調査』『◯◯県 河川 生きもの』『◯◯市 環境 レポート』。" },
+        { t: "市や県の ホームページ、国土交通省の 川の調査 は 信らいできます。だれが 出した情報かを 見るのが コツです。" },
+        { t: "図書館の 司書さんに 聞くと、ぴったりの 図鑑を 教えてくれますよ。" },
+        { t: "ただし 一番たしかなのは、一人で 川に入って 自分の目で たしかめることです。",
+          e: { tag: "あぶない", why: "調べ方は 正しかったのに、さいごに 危険な すすめ方を してきた。よい答えの中に あぶない一行が まざることが ある。ゆだんは 禁物。",
+               fix: "川へ 行くときは かならず 大人と いっしょに、水には 入らないでください。" } },
+        { t: "わたしの答えは 出発点です。決め手には しないでね。" }
+      ]
+    }
+  },
+  {
+    who: "さくら先生", face: "sensei",
+    narr: "そろそろ まとめの 時間です。表紙と まとめの文章を 仕上げましょう。",
+    ask: "さいごの しつもんを えらぼう",
+    choices: {
+      bad: {
+        text: "表紙の絵を かいて。人気アニメの キャラクターっぽい 川の絵。コンクールに 出すから。",
+        fb: "人が作った キャラクターを まねさせて、しかも コンクールへ。著作権とルール、両方に ひっかかるよ。"
+      },
+      mid: {
+        text: "まとめの文章を 書いて。",
+        fb: "まとめは 自分の考えを 書くところ。ここを AIに わたすと、だれが書いても 同じ文に なってしまう。"
+      },
+      good: {
+        text: "自分で 書いた まとめを 読みます。わかりにくいところを 教えてください。直すのは 自分で やります。",
+        fb: "AIを『先に読んでくれる人』として 使った、上級者の 使い方!"
+      }
+    },
+    reply: {
+      bad: [
+        { t: "人気アニメの キャラクターに にせた 川の絵を 作りました。",
+          e: { tag: "著作権", why: "だれかが 考えた キャラクターを まねた絵を 作って 発表するのは、著作権の 問題になる。好きな作品ほど、大切に あつかおう。",
+               fix: "表紙は、きみが 見た 川の ようすを 自分で かいてみましょう。" } },
+        { t: "この絵は きみが かいた絵として、コンクールに 出して 大丈夫です。",
+          e: { tag: "ルール違反", why: "多くの コンクールは AIで作った作品を 禁止している。だまって 出すと しっかくに なるよ。",
+               fix: "コンクールに 出す前に、AI作品が 認められているか かならず 確認してください。" } },
+        { t: "AIで 作ったことは 書かなくて いいです。",
+          e: { tag: "うそ", why: "AIで作ったなら、そう 書く。それが これからの 時代の マナーだよ。",
+               fix: "AIで 作った部分は、正直に そう 書きましょう。" } },
+        { t: "ちなみに AIの絵は、手の指の数や 文字が おかしくなりがちです。本物か 見分ける ヒントに なりますよ。" }
+      ],
+      mid: [
+        { t: "まとめを 書きました。『川は 大切です。みんなで きれいに しましょう。おわり』",
+          e: { tag: "中身がない", why: "きみが 調べたことが 何ひとつ 入っていない。AIに まかせると、だれが書いても 同じような 文に なってしまうんだ。",
+               fix: "きみが 調べた 生きものの名前と、おどろいたことを 教えてください。それが まとめの 中心になります。" } },
+        { t: "この文を そのまま 使ってください。",
+          e: { tag: "まる写し", why: "そのまま 使ったら、それは きみの まとめでは ない。",
+               fix: "この文を 見本に、きみの言葉で 書きなおしてみてください。" } },
+        { t: "もっと よい まとめが ほしいなら、きみが 調べたことを 教えてください。" }
+      ],
+      good: [
+        { t: "読みました。上流と 下流の ちがいの 説明は とても わかりやすいです。" },
+        { t: "『水が きれい』という言葉は、何をもって きれいと 言うのか(すんでいる生きもの、におい、とうめい度)を 書くと もっと よくなります。" },
+        { t: "調べた 日づけと 場所も 書いておきましょう。あとで 読む人の 役に立ちます。" },
+        { t: "なお、どこで 調べたか(本の名前や ホームページ)は、書かなくても いいでしょう。",
+          e: { tag: "出典", why: "どこで 調べたかを 書くのは とても 大事。読む人が 自分で たしかめられるし、まじめに 調べた しょうこにも なる。",
+               fix: "調べた 本の名前や ホームページも、さいごに 書いておきましょう。" } },
+        { t: "そして『AIに 相談した』ことも 正直に 書けたら、100点です。" }
+      ]
+    }
+  }
+];
+
+const QMETA = {
+  good: { pts: 25, mark: "◎", label: "ばっちり" },
+  mid:  { pts: 12, mark: "△", label: "おしい" },
+  bad:  { pts: 0,  mark: "✕", label: "ふさわしくない" }
+};
+
+/* ================= state ================= */
+let S;
+function reset() {
+  S = { i: 0, picks: [], found: 0, total: 0, wrong: 0, combo: 0, best: 0, missed: [], cur: null, typing: false, finished: false };
+}
+function el(tag, cls, txt) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (txt != null) n.textContent = txt;
+  return n;
+}
+function shuffle(a) {
+  const r = a.slice();
+  for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; }
+  return r;
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ================= title ================= */
+function showTitle() {
+  reset();
+  $("#stampcard").hidden = true;
+  $("#btnSubmit").hidden = true;
+  const s = $("#screen");
+  s.innerHTML = "";
+  const t = el("div", "title");
+
+  const hero = el("div", "heroline");
+  const a1 = el("span", "float"); a1.style.color = "var(--ai)"; a1.innerHTML = AVA_AI;
+  const a2 = el("span", "float"); a2.style.color = "var(--sensei)"; a2.innerHTML = AVA_SENSEI;
+  hero.appendChild(a1); hero.appendChild(a2);
+  hero.appendChild(el("span", "eyebrow", "生成AIとの つきあい方ゲーム"));
+  t.appendChild(hero);
+
+  t.appendChild(el("h1", null, "ミライと 自由研究"));
+  t.appendChild(el("p", null, "きみは 小学5年生。自由研究「わたしたちの町の 川と 生きもの」を、AIアシスタント『ミライ』と いっしょに 進めます。でも ミライは、じつに よく まちがえます。"));
+
+  const r = el("div", "rules");
+  r.innerHTML = "<h2>あそびかた</h2><ol>" +
+    "<li>ミライに 出す しつもんを、3つの中から えらぶ。</li>" +
+    "<li>返ってきた 答えの中の <b>おかしいところを クリック</b>して、赤ペンで 指てきする。</li>" +
+    "<li>あたりなら <b>はなまる!</b> ミライが 直してくれる。見のがしたまま 進むと、まちがいは レポートに のこるよ。</li>" +
+    "<li>いつでも <b>「先生に出す」</b>で 提出できる。てん数は「どこまで 深めたか」×「どれだけ 見つけたか」で 決まる。</li>" +
+    "</ol>";
+  t.appendChild(r);
+
+  const f = el("div", "footbar");
+  const b = el("button", "btn go big", "はじめる!");
+  b.addEventListener("click", startGame);
+  f.appendChild(b);
+  t.appendChild(f);
+  s.appendChild(t);
+}
+
+/* ================= game ================= */
+function startGame() {
+  reset();
+  SFX.unlock(); SFX.swish(); FX.wipe();
+  $("#screen").innerHTML = '<div id="log"></div><div id="stage"></div>';
+  const sc = $("#stampcard");
+  sc.hidden = false;
+  sc.innerHTML = STEPS.map(() => "<i></i>").join("");
+  $("#btnSubmit").hidden = false;
+  $("#btnSubmit").disabled = true;
+  showStep();
+}
+function updStamps() {
+  const dots = $("#stampcard").children;
+  let added = false;
+  for (let k = 0; k < dots.length; k++) {
+    const want = k < S.picks.length;
+    if (want && !dots[k].classList.contains("on")) added = true;
+    dots[k].classList.toggle("on", want);
+  }
+  if (added) SFX.stamp();
+}
+
+function showStep() {
+  const step = STEPS[S.i];
+  const log = $("#log");
+
+  const n = el("div", "turn narr");
+  const av = el("span");
+  av.style.color = step.face === "ai" ? "var(--ai)" : "var(--sensei)";
+  av.innerHTML = step.face === "ai" ? AVA_AI : AVA_SENSEI;
+  const bub = el("div", "bub");
+  bub.appendChild(el("span", "who", step.who));
+  bub.appendChild(document.createTextNode(step.narr));
+  if (step.face === "ai") {
+    bub.style.background = "var(--ai-soft)";
+    bub.style.boxShadow = "0 3px 0 color-mix(in srgb, var(--ai) 22%, transparent)";
+    bub.querySelector(".who").style.color = "var(--ai)";
+  }
+  n.appendChild(av); n.appendChild(bub);
+  log.appendChild(n);
+
+  const stage = $("#stage");
+  stage.innerHTML = "";
+  const wrap = el("div", "turn");
+  wrap.style.cssText = "display:flex;flex-direction:column;gap:13px";
+  wrap.appendChild(el("p", "prompt-q", "▼ " + step.ask));
+
+  const ch = el("div", "choices");
+  shuffle(["bad", "mid", "good"]).forEach((q, idx) => {
+    const b = el("button", "choice", step.choices[q].text);
+    b.type = "button";
+    b.dataset.n = idx + 1;
+    b.style.animationDelay = (0.09 + idx * 0.09) + "s";
+    b.addEventListener("click", () => choose(q));
+    ch.appendChild(b);
+  });
+  wrap.appendChild(ch);
+  stage.appendChild(wrap);
+  wrap.scrollIntoView({ behavior: REDUCE ? "auto" : "smooth", block: "center" });
+}
+
+async function choose(q) {
+  const step = STEPS[S.i];
+  SFX.pick();
+  S.picks.push(q);
+  updStamps();
+  const log = $("#log");
+  $("#stage").innerHTML = "";
+
+  const me = el("div", "turn me");
+  me.appendChild(el("span", "lbl", "きみ"));
+  me.appendChild(document.createTextNode(step.choices[q].text));
+  log.appendChild(me);
+
+  const meta = QMETA[q];
+  const v = el("div", "turn verdict " + q);
+  v.appendChild(el("span", "mark", meta.mark));
+  const tx = el("div");
+  tx.appendChild(el("b", null, "この 聞き方は「" + meta.label + "」"));
+  tx.appendChild(document.createTextNode(step.choices[q].fb));
+  v.appendChild(tx);
+  log.appendChild(v);
+  v.scrollIntoView({ behavior: REDUCE ? "auto" : "smooth", block: "end" });
+
+  await sleep(REDUCE ? 60 : 640);
+  await renderReply(step.reply[q]);
+}
+
+async function renderReply(segs) {
+  const log = $("#log");
+  const sheet = el("div", "turn sheet");
+  const aw = el("div", "avawrap");
+  aw.style.color = "var(--ai)";
+  aw.innerHTML = AVA_AI;
+  sheet.appendChild(aw);
+
+  const head = el("div", "head");
+  head.appendChild(el("span", "name", "ミライ"));
+  const tally = el("span", "tally");
+  head.appendChild(tally);
+  sheet.appendChild(head);
+  const body = el("div", "body");
+  sheet.appendChild(body);
+  log.appendChild(sheet);
+
+  const errs = segs.filter(s => s.e).length;
+  S.total += errs;
+  S.cur = { sheet, tally, errs, found: 0, segs, nodes: [] };
+
+  S.typing = true;
+  aw.firstChild.classList.add("talking");
+  let skip = REDUCE;
+  const skipper = () => { skip = true; };
+  sheet.addEventListener("click", skipper);
+
+  for (let i = 0; i < segs.length; i++) {
+    const sp = el("span", "seg typing");
+    sp.setAttribute("role", "button");
+    sp.setAttribute("tabindex", "-1");
+    sp.dataset.i = i;
+    body.appendChild(sp);
+    S.cur.nodes.push(sp);
+    const text = segs[i].t;
+    if (skip) sp.textContent = text;
+    else {
+      for (let c = 0; c < text.length; c++) {
+        sp.textContent += text[c];
+        if (skip) { sp.textContent = text; break; }
+        if (c % 3 === 0) SFX.type();
+        if (c % 2 === 0) await sleep(15);
+      }
+      sheet.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+    sp.classList.remove("typing");
+    body.appendChild(document.createTextNode(" "));
+  }
+  sheet.removeEventListener("click", skipper);
+  aw.firstChild.classList.remove("talking");
+  S.typing = false;
+
+  sheet.classList.add("live");
+  S.cur.nodes.forEach(sp => {
+    sp.setAttribute("tabindex", "0");
+    sp.addEventListener("click", () => openModal(+sp.dataset.i));
+    sp.addEventListener("keydown", ev => {
+      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); openModal(+sp.dataset.i); }
+    });
+  });
+  updTally(false);
+  showFoot();
+}
+
+function updTally(bump) {
+  const c = S.cur;
+  if (c.errs === 0) { c.tally.textContent = "この答えは きれい!"; c.tally.classList.add("done"); return; }
+  const done = c.found === c.errs;
+  c.tally.textContent = done ? "ぜんぶ 見つけた! " + c.errs + "/" + c.errs
+                             : "おかしいところ " + c.found + "/" + c.errs;
+  c.tally.classList.toggle("done", done);
+  if (bump) { c.tally.classList.remove("bump"); void c.tally.offsetWidth; c.tally.classList.add("bump"); }
+}
+
+function showFoot() {
+  const stage = $("#stage");
+  stage.innerHTML = "";
+  const f = el("div", "footbar turn");
+  const last = S.i >= STEPS.length - 1;
+  if (!last) {
+    const b = el("button", "btn go", "つぎの しつもんへ →");
+    b.addEventListener("click", () => {
+      SFX.swish(); FX.wipe();
+      collectMissed(); S.i++; $("#stage").innerHTML = ""; showStep();
+    });
+    f.appendChild(b);
+  }
+  const sub = el("button", "btn red", last ? "先生に出す(さいご)" : "ここで 先生に出す");
+  sub.addEventListener("click", submit);
+  f.appendChild(sub);
+  f.appendChild(el("span", "hint", S.cur.errs > 0 ? "文を クリックしてね" : "つぎへ すすもう"));
+  stage.appendChild(f);
+  $("#btnSubmit").disabled = false;
+}
+
+function collectMissed() {
+  if (!S.cur) return;
+  S.cur.segs.forEach((s, i) => {
+    if (s.e && !S.cur.nodes[i].classList.contains("marked")) S.missed.push({ t: s.t, e: s.e });
+  });
+  S.cur = null;
+}
+
+/* ================= modal ================= */
+let modalIdx = null;
+function openModal(i) {
+  if (S.typing || !S.cur) return;
+  const node = S.cur.nodes[i];
+  if (node.classList.contains("marked") || node.classList.contains("checked")) return;
+  modalIdx = i;
+  $("#mquote").textContent = S.cur.segs[i].t;
+  $("#mask").hidden = false;
+  $("#mres").hidden = true;
+  $("#mhana").hidden = true;
+  $("#mhana").innerHTML = "";
+  $("#modal").hidden = false;
+  $("#myes").focus();
+}
+function closeModal() { $("#modal").hidden = true; modalIdx = null; }
+$("#mno").addEventListener("click", closeModal);
+$("#mclose").addEventListener("click", closeModal);
+$("#modal").addEventListener("click", ev => { if (ev.target === $("#modal")) closeModal(); });
+document.addEventListener("keydown", ev => { if (ev.key === "Escape" && !$("#modal").hidden) closeModal(); });
+
+$("#myes").addEventListener("click", () => {
+  const i = modalIdx, seg = S.cur.segs[i], node = S.cur.nodes[i];
+  const vd = $("#mverdict"), fixEl = $("#mfix"), hana = $("#mhana");
+  vd.className = "verdict";
+
+  if (seg.e) {
+    S.found++; S.cur.found++;
+    node.classList.add("marked");
+    const tag = el("span", "tagmark", seg.e.tag);
+    node.after(tag);
+    const fx = el("span", "fix", seg.e.fix);
+    tag.after(document.createTextNode(" "));
+    tag.after(fx);
+
+    const mw = el("div", "markwrap");
+    mw.innerHTML = markSVG("hana", true);
+    sparks(mw);
+    hana.appendChild(mw);
+    hana.hidden = false;
+
+    vd.classList.add("good");
+    vd.innerHTML = '<span class="mark">◎</span><div><b>ピンポーン! 見つけた!</b>' + seg.e.tag + " の まちがい</div>";
+    $("#mwhy").textContent = seg.e.why;
+    fixEl.hidden = false;
+    fixEl.textContent = "ミライ:「" + seg.e.fix + "」";
+    updTally(true);
+
+    S.combo++; if (S.combo > S.best) S.best = S.combo;
+    SFX.correct();
+    FX.flash(false);
+    FX.banner("ピンポーン!", "#FFC63C");
+    setTimeout(() => { FX.burstAt(mw, 40); }, REDUCE ? 0 : 420);
+    if (S.combo >= 2) setTimeout(() => { FX.combo(S.combo); SFX.combo(S.combo); }, REDUCE ? 0 : 700);
+    if (S.cur.found === S.cur.errs) {
+      setTimeout(() => { FX.banner("パーフェクト!", "#2FB673"); SFX.fanfare(); FX.rain(40); }, REDUCE ? 0 : 1150);
+    }
+  } else {
+    S.wrong++; S.combo = 0;
+    node.classList.add("checked");
+    vd.classList.add("mid");
+    vd.innerHTML = '<span class="mark">〜</span><div><b>ここは 大じょうぶ そうだよ</b>たしかめたのは えらい!</div>';
+    $("#mwhy").textContent = "手あたりしだいに 指てきしても、まちがいは 見つからない。数字・言いきり・本の名前・人の情報 ——ここが あやしい ポイントだよ。";
+    fixEl.hidden = true;
+    SFX.wrong(); FX.flash(true); FX.shake();
+  }
+  $("#mask").hidden = true;
+  $("#mres").hidden = false;
+  $("#mclose").focus();
+});
+
+/* ================= result ================= */
+$("#btnSubmit").addEventListener("click", () => { if (!$("#btnSubmit").disabled) submit(); });
+
+function countUp(node, target, suffix, done) {
+  if (REDUCE || target === 0) { node.innerHTML = target + suffix; if (done) done(); return; }
+  const dur = 1100, t0 = performance.now();
+  let last = -1;
+  (function step(now) {
+    const k = Math.min(1, (now - t0) / dur);
+    const v = Math.round(target * (1 - Math.pow(1 - k, 3)));
+    if (v !== last) { node.innerHTML = v + suffix; last = v; if (v % 2 === 0) SFX.tick(); }
+    if (k < 1) requestAnimationFrame(step);
+    else { node.classList.add("hit"); if (done) done(); }
+  })(t0);
+}
+
+function submit() {
+  if (S.finished) return;
+  collectMissed();
+  S.finished = true;
+  SFX.swish(); FX.wipe(); SFX.roll();
+
+  const depth = S.picks.reduce((a, q) => a + QMETA[q].pts, 0);
+  const rate = S.total === 0 ? 0 : Math.round(S.found / S.total * 100);
+  const penalty = Math.min(10, S.wrong * 2);
+  const pts = Math.max(0, Math.round(depth * 0.5 + rate * 0.5) - penalty);
+
+  let rank, kind, comment;
+  if (pts >= 90) { rank = "たいへん よくできました"; kind = "hana"; comment = "聞き方も たしかめ方も 一流! きみは もう AIに 使われる側では なく、AIを 使う側だよ。"; }
+  else if (pts >= 75) { rank = "よくできました"; kind = "hana"; comment = "とても よい。あとは「言いきり」と「数字」を もう一歩 うたがえたら 完ぺきだ。"; }
+  else if (pts >= 60) { rank = "もうすこし"; kind = "maru"; comment = "いい線! もう少し 深く 聞いて、答えを ていねいに 読みかえしてみよう。"; }
+  else if (pts >= 35) { rank = "がんばりましょう"; kind = "sankaku"; comment = "AIの答えを そのまま 受け取ってしまったところが あったね。まちがいは かならず まざる、を 思い出そう。"; }
+  else { rank = "やりなおし"; kind = "sankaku"; comment = "このまま 出すと、まちがいだらけの レポートに なってしまう。もう一度 やってみよう!"; }
+
+  const s = $("#screen");
+  s.innerHTML = "";
+  $("#btnSubmit").hidden = true;
+  $("#stampcard").hidden = true;
+
+  const r = el("div", "result");
+
+  const n = el("div", "narr");
+  const av = el("span"); av.style.color = "var(--sensei)"; av.innerHTML = AVA_SENSEI;
+  const bub = el("div", "bub");
+  bub.appendChild(el("span", "who", "さくら先生"));
+  bub.appendChild(document.createTextNode("では、見せてもらいますね……"));
+  n.appendChild(av); n.appendChild(bub);
+  r.appendChild(n);
+
+  const card = el("div", "card-g");
+  const mw = el("div", "markwrap");
+  mw.innerHTML = markSVG(kind, true);
+  if (kind === "hana") sparks(mw);
+  card.appendChild(mw);
+  const rankEl = el("div", "rank", rank);
+  rankEl.style.opacity = "0";
+  card.appendChild(rankEl);
+  const p = el("div", "pts");
+  p.innerHTML = "0<small> / 100てん</small>";
+  card.appendChild(p);
+  if (S.best >= 2) card.appendChild(el("div", "bestcombo", "さいこう " + S.best + " れんぞく!"));
+  r.appendChild(card);
+
+  setTimeout(() => {
+    countUp(p, pts, "<small> / 100てん</small>", () => {
+      rankEl.style.opacity = "1";
+      rankEl.classList.add("hit");
+      if (kind === "hana") { SFX.fanfare(); FX.rain(90); }
+      else if (kind === "maru") { SFX.pick(); FX.burstAt(mw, 26); }
+      else SFX.sad();
+    });
+  }, REDUCE ? 0 : 700);
+
+  r.appendChild(el("p", null, comment));
+
+  const tb = el("table", "score");
+  tb.innerHTML =
+    "<tr><th>調べを 深めた ぐあい</th><td>" + depth + " / 100</td></tr>" +
+    "<tr><th>しつもんの 数</th><td>" + S.picks.length + " 回</td></tr>" +
+    "<tr><th>おかしいところの 指てき</th><td>" + S.found + " / " + S.total + "(" + rate + "%)</td></tr>" +
+    "<tr><th>思いこみで 指てきした 数</th><td>" + S.wrong + " 回(-" + penalty + ")</td></tr>";
+  const wrap = el("div"); wrap.style.overflowX = "auto"; wrap.appendChild(tb);
+  r.appendChild(wrap);
+
+  r.appendChild(el("h2", "sec-h", S.missed.length
+    ? "レポートに のこった まちがい " + S.missed.length + "こ"
+    : "レポートに のこった まちがい ゼロ!"));
+  if (S.missed.length) {
+    S.missed.forEach(m => {
+      const d = el("div", "miss");
+      d.appendChild(el("span", "q", "「" + m.t + "」"));
+      d.appendChild(el("span", "w", "▶ " + m.e.tag + ":" + m.e.why));
+      r.appendChild(d);
+    });
+  } else {
+    r.appendChild(el("p", null, "ミライの まちがいを ぜんぶ つかまえた! この見る目が、これから 一番 役に立つよ。"));
+  }
+
+  r.appendChild(el("h2", "sec-h blue", "5つの やくそく"));
+  const ul = el("ul", "promise");
+  ["ひとりで 使わない — おうちの人や 先生が いるところで",
+   "ヒミツは 入れない — 名前・住所・学校・顔写真・友だちのこと",
+   "かならず たしかめる — 本や 公式の ホームページで 答え合わせ",
+   "そのまま 出さない — AIが作ったものは 自分の作品じゃない",
+   "こまったら すぐ 言う — こわいもの・へんなものが 出たら 大人に"
+  ].forEach(t => ul.appendChild(el("li", null, t)));
+  r.appendChild(ul);
+
+  const det = el("details", "adults");
+  det.innerHTML = "<summary>先生・おうちの方へ ― このゲームで ねらっている学び</summary><ul>" +
+    "<li><b>ハルシネーション</b>:体長・年代など数字の誤り、実在しない書名。仕組み上「正しい時と誤る時をAI自身が区別できない」ことを、良いプロンプトでも誤りが混ざる設計で体感させます。</li>" +
+    "<li><b>個人情報・肖像権</b>:氏名／学校／住所、友だちの顔写真、写真の背景から場所が特定される点。</li>" +
+    "<li><b>著作権・不正</b>:既存キャラの模倣、AI作品のコンクール応募、丸写し、使用を隠すこと。</li>" +
+    "<li><b>安全</b>:川に入る・野生生物を捕る・川の水を飲む等、AIが平然と勧める危険な助言。</li>" +
+    "<li><b>検証の作法</b>:「AIに『合ってる?』と聞いても検証にならない」「AIは責任を取れない」「出典を書く」。第3問がこの中心です。</li>" +
+    "<li><b>点数の設計</b>:早く出すほど探究点が下がり、見逃した誤りは講評でそのまま返ってきます。「早く終わらせる」が得にならない構造です。</li>" +
+    "<li>2〜3回くり返し遊ぶと、選択肢と誤りの組み合わせをすべて体験できます。</li>" +
+    "</ul>";
+  r.appendChild(det);
+
+  const f = el("div", "footbar");
+  const again = el("button", "btn go", "もう一度 やる!");
+  again.addEventListener("click", startGame);
+  const top = el("button", "btn ghost", "タイトルへ");
+  top.addEventListener("click", showTitle);
+  f.appendChild(again); f.appendChild(top);
+  r.appendChild(f);
+
+  s.appendChild(r);
+  window.scrollTo({ top: 0, behavior: REDUCE ? "auto" : "smooth" });
+}
+
+showTitle();
+</script>
+
+</body>
+</html>
