@@ -324,8 +324,23 @@ details.adults ul{padding-left:1.2em;margin:10px 0 0}
   text-decoration:underline dotted color-mix(in srgb, var(--ai) 60%, transparent);
   text-decoration-thickness:2px;text-underline-offset:5px;
 }
-.skipchip{position:absolute;right:12px;bottom:8px;font-family:var(--f-head);font-size:13px;
-  color:var(--ai);background:var(--ai-soft);border:none;border-radius:999px;padding:6px 14px;cursor:pointer}
+/* 考え中インジケーター（LLMアプリの「・・・」） */
+.dots{display:inline-flex;gap:5px;align-items:center;vertical-align:middle;height:1.5em}
+.dots i{width:9px;height:9px;border-radius:50%;background:currentColor;opacity:.32;
+  animation:dotpulse 1.15s ease-in-out infinite}
+.dots i:nth-child(2){animation-delay:.17s}
+.dots i:nth-child(3){animation-delay:.34s}
+@keyframes dotpulse{0%,62%,100%{opacity:.28;transform:translateY(0)}
+  31%{opacity:1;transform:translateY(-5px)}}
+
+/* 文字送り中の一括スキップ */
+.tapskip{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:40;
+  font-family:var(--f-head);font-size:14.5px;color:var(--paper);background:var(--ink);
+  border:none;border-radius:999px;padding:10px 22px;cursor:pointer;
+  box-shadow:0 4px 0 color-mix(in srgb,var(--ink) 55%,#000);
+  animation:bounceIn .3s cubic-bezier(.2,1.4,.4,1) both}
+.tapskip:active{transform:translateX(-50%) translateY(4px);box-shadow:none}
+@media (max-width:600px){.tapskip{bottom:12px;font-size:13.5px;padding:9px 18px}}
 
 /* 初回チュートリアル */
 .coach{display:flex;gap:12px;align-items:center;align-self:center;
@@ -928,6 +943,56 @@ function shuffle(a) {
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+/* ========== 吹き出しストリーミング制御 ========== */
+let TYPE = null;
+function skipOnTap(ev) {
+  if (ev.target.closest(".sfxbtn,.modal")) return;
+  if (TYPE) TYPE.skip = true;
+}
+function beginTyping() {
+  S.typing = true;
+  TYPE = { skip: REDUCE, subWas: $("#btnSubmit").disabled };
+  $("#btnSubmit").disabled = true;
+  if (!REDUCE) {
+    const b = el("button", "tapskip", "▶▶ ぜんぶ 見る");
+    b.id = "tapskip"; b.type = "button";
+    b.addEventListener("click", () => { TYPE.skip = true; });
+    document.body.appendChild(b);
+    document.addEventListener("pointerdown", skipOnTap, true);
+  }
+  return TYPE;
+}
+function endTyping(ctl) {
+  S.typing = false;
+  const b = $("#tapskip"); if (b) b.remove();
+  document.removeEventListener("pointerdown", skipOnTap, true);
+  if (ctl) $("#btnSubmit").disabled = ctl.subWas;
+  TYPE = null;
+}
+/* 1文字ずつ流し込む */
+async function typeInto(node, text, ctl) {
+  if (ctl.skip) { node.textContent = text; return; }
+  for (let c = 0; c < text.length; c++) {
+    node.textContent += text[c];
+    if (ctl.skip) { node.textContent = text; return; }
+    if (c % 3 === 0) SFX.type();
+    if (c % 2 === 0) await sleep(15);
+  }
+}
+/* 「・・・」を出しながら待つ */
+async function thinking(host, ms, ctl) {
+  if (ctl.skip) return;
+  const d = el("span", "dots");
+  d.innerHTML = "<i></i><i></i><i></i>";
+  host.appendChild(d);
+  let w = 0;
+  while (w < ms && !ctl.skip) { await sleep(60); w += 60; }
+  d.remove();
+}
+function look(node) {
+  node.scrollIntoView({ behavior: REDUCE ? "auto" : "smooth", block: "end" });
+}
+
 /* ================= title ================= */
 function showTitle() {
   reset();
@@ -987,27 +1052,38 @@ function updStamps() {
   if (added) SFX.stamp();
 }
 
-function showStep() {
+async function showStep() {
   const step = STEPS[S.i];
   const log = $("#log");
+  const stage = $("#stage");
+  stage.innerHTML = "";
 
   const n = el("div", "turn narr");
   const av = el("span");
   av.style.color = step.face === "ai" ? "var(--ai)" : "var(--sensei)";
   av.innerHTML = step.face === "ai" ? AVA_AI : AVA_SENSEI;
   const bub = el("div", "bub");
-  bub.appendChild(el("span", "who", step.who));
-  bub.appendChild(document.createTextNode(step.narr));
+  const who = el("span", "who", step.who);
+  bub.appendChild(who);
+  const body = el("span");
+  bub.appendChild(body);
   if (step.face === "ai") {
     bub.style.background = "var(--ai-soft)";
     bub.style.boxShadow = "0 3px 0 color-mix(in srgb, var(--ai) 22%, transparent)";
-    bub.querySelector(".who").style.color = "var(--ai)";
+    who.style.color = "var(--ai)";
   }
   n.appendChild(av); n.appendChild(bub);
   log.appendChild(n);
+  look(n);
 
-  const stage = $("#stage");
-  stage.innerHTML = "";
+  const ctl = beginTyping();
+  av.firstChild.classList.add("talking");
+  await thinking(body, 560, ctl);
+  await typeInto(body, step.narr, ctl);
+  av.firstChild.classList.remove("talking");
+  await sleep(ctl.skip ? 0 : 240);
+  endTyping(ctl);
+
   const wrap = el("div", "turn");
   wrap.style.cssText = "display:flex;flex-direction:column;gap:13px";
   wrap.appendChild(el("p", "prompt-q", "▼ " + step.ask));
@@ -1038,23 +1114,32 @@ async function choose(q) {
   me.appendChild(el("span", "lbl", "きみ"));
   me.appendChild(document.createTextNode(step.choices[q].text));
   log.appendChild(me);
+  look(me);
+
+  const ctl = beginTyping();
+  let w = 0;
+  while (w < 420 && !ctl.skip) { await sleep(60); w += 60; }
 
   const meta = QMETA[q];
   const v = el("div", "turn verdict " + q);
   v.appendChild(el("span", "mark", meta.mark));
   const tx = el("div");
   tx.appendChild(el("b", null, "この 聞き方は「" + meta.label + "」"));
-  tx.appendChild(document.createTextNode(step.choices[q].fb));
+  const fb = el("span");
+  tx.appendChild(fb);
   v.appendChild(tx);
   log.appendChild(v);
-  v.scrollIntoView({ behavior: REDUCE ? "auto" : "smooth", block: "end" });
+  look(v);
+  await typeInto(fb, step.choices[q].fb, ctl);
 
-  await sleep(REDUCE ? 60 : 640);
-  await renderReply(step.reply[q]);
+  await renderReply(step.reply[q], ctl);
 }
 
-async function renderReply(segs) {
+async function renderReply(segs, ctl) {
   const log = $("#log");
+  if (!ctl) ctl = beginTyping();
+  let w = 0;
+  while (w < 380 && !ctl.skip) { await sleep(60); w += 60; }
   const sheet = el("div", "turn sheet");
   const aw = el("div", "avawrap");
   aw.style.color = "var(--ai)";
@@ -1074,18 +1159,9 @@ async function renderReply(segs) {
   S.total += errs;
   S.cur = { sheet, tally, errs, found: 0, segs, nodes: [] };
 
-  S.typing = true;
+  look(sheet);
   aw.firstChild.classList.add("talking");
-  let skip = REDUCE;
-  const skipper = () => { skip = true; };
-  sheet.addEventListener("click", skipper);
-  let chip = null;
-  if (!REDUCE) {
-    chip = el("button", "skipchip", "▶▶ ぜんぶ 見る");
-    chip.type = "button";
-    chip.addEventListener("click", () => { skip = true; });
-    sheet.appendChild(chip);
-  }
+  await thinking(body, 780, ctl);
 
   for (let i = 0; i < segs.length; i++) {
     const sp = el("span", "seg typing");
@@ -1094,24 +1170,13 @@ async function renderReply(segs) {
     sp.dataset.i = i;
     body.appendChild(sp);
     S.cur.nodes.push(sp);
-    const text = segs[i].t;
-    if (skip) sp.textContent = text;
-    else {
-      for (let c = 0; c < text.length; c++) {
-        sp.textContent += text[c];
-        if (skip) { sp.textContent = text; break; }
-        if (c % 3 === 0) SFX.type();
-        if (c % 2 === 0) await sleep(15);
-      }
-      sheet.scrollIntoView({ behavior: "smooth", block: "end" });
-    }
+    await typeInto(sp, segs[i].t, ctl);
+    if (!ctl.skip) look(sheet);
     sp.classList.remove("typing");
     body.appendChild(document.createTextNode(" "));
   }
-  if (chip) chip.remove();
-  sheet.removeEventListener("click", skipper);
   aw.firstChild.classList.remove("talking");
-  S.typing = false;
+  endTyping(ctl);
 
   sheet.classList.add("live");
   S.cur.nodes.forEach(sp => {
