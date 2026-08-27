@@ -954,7 +954,8 @@ function skipOnTap(ev) {
 }
 /* 文字送りは教材の本質（LLMの模擬）なので prefers-reduced-motion では止めず、
    速度を上げて演出のみ抑える。装飾アニメ（紙吹雪・揺れ・ワイプ）は REDUCE で無効のまま。 */
-const PACE = REDUCE ? 0.42 : 1;
+/* 要素と要素のあいだの「間」の倍率。大きくするほど ゆっくりになる */
+const PACE = 1;
 function beginTyping() {
   S.typing = true;
   TYPE = { skip: false, subWas: $("#btnSubmit").disabled };
@@ -985,7 +986,7 @@ async function typeInto(node, text, ctl) {
     node.textContent += text[c];
     if (ctl.skip) { node.textContent = text; return; }
     if (c % 3 === 0) SFX.type();
-    if (c % (REDUCE ? 3 : 2) === 0) await sleep(15);
+    if (c % 3 === 0) await sleep(15);   // 約5ms/文字（この速度で確定）
   }
 }
 /* 「・・・」を出しながら待つ */
@@ -1086,10 +1087,10 @@ async function showStep() {
 
   const ctl = beginTyping();
   av.firstChild.classList.add("talking");
-  await thinking(body, 560, ctl);
+  await thinking(body, 780, ctl);
   await typeInto(body, step.narr, ctl);
   av.firstChild.classList.remove("talking");
-  await pause(240, ctl);
+  await pause(620, ctl);
   endTyping(ctl);
 
   const wrap = el("div", "turn");
@@ -1125,7 +1126,7 @@ async function choose(q) {
   look(me);
 
   const ctl = beginTyping();
-  await pause(420, ctl);
+  await pause(680, ctl);
 
   const meta = QMETA[q];
   const v = el("div", "turn verdict " + q);
@@ -1145,7 +1146,7 @@ async function choose(q) {
 async function renderReply(segs, ctl) {
   const log = $("#log");
   if (!ctl) ctl = beginTyping();
-  await pause(380, ctl);
+  await pause(640, ctl);
   const sheet = el("div", "turn sheet");
   const aw = el("div", "avawrap");
   aw.style.color = "var(--ai)";
@@ -1167,7 +1168,7 @@ async function renderReply(segs, ctl) {
 
   look(sheet);
   aw.firstChild.classList.add("talking");
-  await thinking(body, 780, ctl);
+  await thinking(body, 1050, ctl);
 
   for (let i = 0; i < segs.length; i++) {
     const sp = el("span", "seg typing");
