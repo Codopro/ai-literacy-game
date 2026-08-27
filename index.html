@@ -426,6 +426,9 @@ details.adults ul{padding-left:1.2em;margin:10px 0 0}
     animation-iteration-count:1 !important;transition-duration:.01ms !important}
   .draw{stroke-dashoffset:0}
   #wipe,#banner,#combo,#flash{display:none}
+  /* 文字送りは残すので「考え中」は静止表示で見えるようにする */
+  .dots i{opacity:.55 !important;transform:none !important}
+  .tapskip{animation:none !important}
 }
 </style>
 
@@ -949,18 +952,24 @@ function skipOnTap(ev) {
   if (ev.target.closest(".sfxbtn,.modal")) return;
   if (TYPE) TYPE.skip = true;
 }
+/* 文字送りは教材の本質（LLMの模擬）なので prefers-reduced-motion では止めず、
+   速度を上げて演出のみ抑える。装飾アニメ（紙吹雪・揺れ・ワイプ）は REDUCE で無効のまま。 */
+const PACE = REDUCE ? 0.42 : 1;
 function beginTyping() {
   S.typing = true;
-  TYPE = { skip: REDUCE, subWas: $("#btnSubmit").disabled };
+  TYPE = { skip: false, subWas: $("#btnSubmit").disabled };
   $("#btnSubmit").disabled = true;
-  if (!REDUCE) {
-    const b = el("button", "tapskip", "▶▶ ぜんぶ 見る");
-    b.id = "tapskip"; b.type = "button";
-    b.addEventListener("click", () => { TYPE.skip = true; });
-    document.body.appendChild(b);
-    document.addEventListener("pointerdown", skipOnTap, true);
-  }
+  const b = el("button", "tapskip", "▶▶ ぜんぶ 見る");
+  b.id = "tapskip"; b.type = "button";
+  b.addEventListener("click", () => { TYPE.skip = true; });
+  document.body.appendChild(b);
+  document.addEventListener("pointerdown", skipOnTap, true);
   return TYPE;
+}
+/* スキップ可能な待機 */
+async function pause(ms, ctl) {
+  let w = 0, target = ms * PACE;
+  while (w < target && !ctl.skip) { await sleep(50); w += 50; }
 }
 function endTyping(ctl) {
   S.typing = false;
@@ -976,7 +985,7 @@ async function typeInto(node, text, ctl) {
     node.textContent += text[c];
     if (ctl.skip) { node.textContent = text; return; }
     if (c % 3 === 0) SFX.type();
-    if (c % 2 === 0) await sleep(15);
+    if (c % (REDUCE ? 3 : 2) === 0) await sleep(15);
   }
 }
 /* 「・・・」を出しながら待つ */
@@ -985,8 +994,7 @@ async function thinking(host, ms, ctl) {
   const d = el("span", "dots");
   d.innerHTML = "<i></i><i></i><i></i>";
   host.appendChild(d);
-  let w = 0;
-  while (w < ms && !ctl.skip) { await sleep(60); w += 60; }
+  await pause(ms, ctl);
   d.remove();
 }
 function look(node) {
@@ -1081,7 +1089,7 @@ async function showStep() {
   await thinking(body, 560, ctl);
   await typeInto(body, step.narr, ctl);
   av.firstChild.classList.remove("talking");
-  await sleep(ctl.skip ? 0 : 240);
+  await pause(240, ctl);
   endTyping(ctl);
 
   const wrap = el("div", "turn");
@@ -1117,8 +1125,7 @@ async function choose(q) {
   look(me);
 
   const ctl = beginTyping();
-  let w = 0;
-  while (w < 420 && !ctl.skip) { await sleep(60); w += 60; }
+  await pause(420, ctl);
 
   const meta = QMETA[q];
   const v = el("div", "turn verdict " + q);
@@ -1138,8 +1145,7 @@ async function choose(q) {
 async function renderReply(segs, ctl) {
   const log = $("#log");
   if (!ctl) ctl = beginTyping();
-  let w = 0;
-  while (w < 380 && !ctl.skip) { await sleep(60); w += 60; }
+  await pause(380, ctl);
   const sheet = el("div", "turn sheet");
   const aw = el("div", "avawrap");
   aw.style.color = "var(--ai)";
